@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 
 type Todo = {
@@ -96,20 +96,34 @@ function App() {
     setGenreValue(e.target.value);
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    const newTodo: Todo = {
+  
+    const newTodo = {
       inputValue: inputValue,
       content: contentValue,
       genre: genreValue,
-      id: todos.length,
-      checked: false,
     };
-    setTodos([newTodo, ...todos]);
-    setInputValue("");
-    setContentValue("");
+  
+    try {
+      const response = await fetch('http://localhost:3001/todos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newTodo),
+      });
+  
+      const createdTodo = await response.json();
+      setTodos([createdTodo, ...todos]);
+    } catch (error) {
+      console.error('Error creating todo:', error);
+    }
+  
+    setInputValue('');
+    setContentValue('');
   };
+  
 
   const handleClick = (id: number) => {
     setSelectedTodo(id);
@@ -121,26 +135,74 @@ function App() {
     setShowModal(false);
   };
 
-  const handleUpdate = (id: number, newTitle: string, newContent: string) => {
-    const updatedTodos = todos.map((todo) => {
-      if (todo.id === id) {
-        return { ...todo, inputValue: newTitle, content: newContent };
-      } else {
-        return todo;
+  const handleUpdate = async (id: number, newTitle: string, newContent: string) => {
+    try {
+      const response = await fetch(`http://localhost:3001/todos/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title: newTitle, content: newContent }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to update todo');
       }
-    });
-    setTodos(updatedTodos);
+  
+      const updatedTodo = await response.json();
+      const updatedTodos = todos.map((todo) => {
+        if (todo.id === id) {
+          return { ...todo, inputValue: updatedTodo.title, content: updatedTodo.content };
+        } else {
+          return todo;
+        }
+      });
+      setTodos(updatedTodos);
+    } catch (error) {
+      console.error('Error updating todo:', error);
+    }
   };
+  
 
-  const handleDelete = (id: number) => {
-    const newTodos = todos.filter((todo) => todo.id !== id);
-    setTodos(newTodos);
-    if (selectedTodo === id) {
-      setSelectedTodo(null);
+  const handleDelete = async (id: number) => {
+    try {
+      const response = await fetch(`http://localhost:3001/todos/${id}`, {
+        method: 'DELETE',
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to delete todo');
+      }
+  
+      const newTodos = todos.filter((todo) => todo.id !== id);
+      setTodos(newTodos);
+      if (selectedTodo === id) {
+        setSelectedTodo(null);
+      }
+    } catch (error) {
+      console.error('Error deleting todo:', error);
+    }
+  };
+  
+
+  const selectedTodoContent = selectedTodo !== null ? todos.find((todo) => todo.id === selectedTodo) : null;
+
+
+  // Todoリストを取得する関数
+  const fetchTodos = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/todos');
+      const todos = await response.json();
+      setTodos(todos);
+    } catch (error) {
+      console.error('Error fetching todos:', error);
     }
   };
 
-  const selectedTodoContent = selectedTodo !== null ? todos.find((todo) => todo.id === selectedTodo) : null;
+   // コンポーネントがマウントされたときにTodoリストを取得
+   useEffect(() => {
+    fetchTodos();
+  }, []);
 
   return (
     <div className="App">
