@@ -11,9 +11,10 @@ type Todo = {
 
 type ModalProps = {
   todo: Todo | null;
-  onCancel: () => void;
+  onClose: () => void;
   onUpdate: (id: number, inputValue: string, content: string) => void;
 };
+
 
 
 const Modal: React.FC<ModalProps> = ({ todo, onClose, onUpdate }) => {
@@ -185,7 +186,8 @@ function App() {
   };
   
 
-  const selectedTodoContent = selectedTodo !== null ? todos.find((todo) => todo.id === selectedTodo) : null;
+  const selectedTodoContent = selectedTodo !== null ? todos.find((todo) => todo.id === selectedTodo) ?? null : null;
+
 
 
   // Todoリストを取得する関数

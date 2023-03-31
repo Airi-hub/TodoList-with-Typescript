@@ -2,7 +2,6 @@ version: '3'
 services:
   frontend:
     build: .
-    # Node.jsのグローバル変数です。開発用途なのでdevelopmentを指定します。
     environment:
       - NODE_ENV=development
     volumes:
@@ -11,3 +10,12 @@ services:
     ports:
       - 8000:3000
     tty: true
+  backend:
+    build: .
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./:/usr/src/app
+
+
+
